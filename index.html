@@ -564,6 +564,9 @@
     gap: 12px;
   }
 
+  /* Hide analytics-local filters — analytics will use main dashboard filters instead */
+  .analytics-filters { display: none !important; }
+
   .chart-card {
     background: var(--white);
     border: 1px solid rgba(15, 87, 140, 0.08);
@@ -578,6 +581,9 @@
     background: linear-gradient(180deg, rgba(13,63,110,0.02), rgba(13,63,110,0.00));
   }
 
+  .chart-body canvas { width: 100% !important; height: 100% !important; display: block; }
+
+
   .chart-header h3 {
     margin: 0;
     font-size: 14px;
@@ -585,8 +591,15 @@
   }
 
   .chart-body {
-    padding: 10px;
+    .chart-body { height: 210px; min-height: 210px; }
+    .chart-body canvas { height: 100% !important; }
     height: 220px;
+
+  @media (max-width: 420px) {
+    .chart-body { height: 320px; min-height: 320px; }
+    .analytics-filters { gap:6px; }
+    .analytics-filters .form-group { min-width: 110px; }
+  }
     min-height: 220px;
   }
 
@@ -961,7 +974,29 @@
           <h2>�📊 Analytics Dashboard</h2>
         </div>
         <div class="card-body">
-          <div class="analytics-grid">
+              <div class="analytics-filters" style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:end">
+                <div class="form-group" style="margin-bottom:0">
+                  <label for="analytics-month-selector">Month</label>
+                  <select id="analytics-month-selector"></select>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label for="analytics-year-selector">Year</label>
+                  <select id="analytics-year-selector"></select>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label for="analytics-date-selector">Date</label>
+                  <input type="date" id="analytics-date-selector" />
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label>&nbsp;</label>
+                  <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary" onclick="applyAnalyticsFilter()">Apply</button>
+                    <button class="btn btn-secondary" onclick="resetAnalyticsToCurrentMonth()">Reset</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="analytics-grid">
             <div class="chart-card">
               <div class="chart-header"><h3>Daily Revenue</h3></div>
               <div class="chart-body"><canvas id="dailyRevenueChart"></canvas></div>
@@ -981,6 +1016,14 @@
             <div class="chart-card">
               <div class="chart-header"><h3>Top-Selling Days</h3></div>
               <div class="chart-body"><canvas id="topDaysChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Expenses (Monthly)</h3></div>
+              <div class="chart-body"><canvas id="expensesChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Top Sales Dates</h3></div>
+              <div class="chart-body"><canvas id="topSalesChart"></canvas></div>
             </div>
           </div>
         </div>
@@ -1025,6 +1068,13 @@ const state = {
   expenseMonthFilter: 'all',
   charts: {},
   analyticsPage: 1
+};
+
+// analytics-specific filters (separate from main selectors)
+state.analytics = {
+  selectedMonth: 'current',
+  selectedYear: new Date().getFullYear(),
+  selectedDate: ''
 };
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1076,6 +1126,10 @@ function populateMonthSelector() {
   expenseMonthSelect.innerHTML = '<option value="all">All Months</option>' + monthNames.map((month, index) => `<option value="${index}">${month}</option>`).join('');
   monthSelect.value = 'current';
   expenseMonthSelect.value = 'all';
+  // analytics selectors
+  const analyticsMonth = document.getElementById('analytics-month-selector');
+  analyticsMonth.innerHTML = options.join('');
+  analyticsMonth.value = 'current';
 }
 
 function populateYearSelector() {
@@ -1087,18 +1141,25 @@ function populateYearSelector() {
   }
   yearSelect.innerHTML = years.join('');
   yearSelect.value = String(currentYear);
+  // analytics year selector
+  const analyticsYear = document.getElementById('analytics-year-selector');
+  analyticsYear.innerHTML = years.join('');
+  analyticsYear.value = String(currentYear);
 }
 
 function getSelectedPeriod() {
+  // default to dashboard filters unless analytics-specific filter is requested
   const now = new Date();
-  const month = state.selectedMonth === 'current' ? now.getMonth() : state.selectedMonth === 'all' ? null : Number(state.selectedMonth);
-  const year = Number(state.selectedYear || now.getFullYear());
-  const monthLabel = state.selectedMonth === 'current'
+  const useAnalytics = (arguments[0] && arguments[0] === 'analytics');
+  const sel = useAnalytics ? state.analytics : state;
+  const month = sel.selectedMonth === 'current' ? now.getMonth() : sel.selectedMonth === 'all' ? null : Number(sel.selectedMonth);
+  const year = Number(sel.selectedYear || now.getFullYear());
+  const monthLabel = sel.selectedMonth === 'current'
     ? 'Current Month'
-    : state.selectedMonth === 'all'
+    : sel.selectedMonth === 'all'
       ? `${year}`
       : `${monthNames[month]} ${year}`;
-  return { month, year, monthLabel, date: state.selectedDate || '' };
+  return { month, year, monthLabel, date: sel.selectedDate || '' };
 }
 
 function getFilterKey() {
@@ -1108,7 +1169,7 @@ function getFilterKey() {
 }
 
 function getFilteredSales() {
-  const period = getSelectedPeriod();
+  const period = getSelectedPeriod(arguments[0] === 'analytics' ? 'analytics' : undefined);
   const selectedDate = period.date;
   const selectedMonth = period.month;
   const selectedYear = period.year;
@@ -1122,7 +1183,7 @@ function getFilteredSales() {
 }
 
 function getFilteredExpenses() {
-  const period = getSelectedPeriod();
+  const period = getSelectedPeriod(arguments[0] === 'analytics' ? 'analytics' : undefined);
   const selectedDate = period.date;
   const selectedMonth = period.month;
   const selectedYear = period.year;
@@ -1294,7 +1355,7 @@ function renderExpenseTable() {
   const date = state.expenseDateFilter;
   const month = state.expenseMonthFilter;
 
-  const filteredExpenses = getFilteredExpenses().filter(item => {
+  const filteredExpenses = getFilteredExpenses('analytics').filter(item => {
     const matchesSearch = !search || (item.description || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search);
     const matchesCategory = category === 'all' || item.category === category;
     const matchesDate = !date || item.date === date;
@@ -1325,16 +1386,29 @@ function renderExpenseTable() {
   `).join('');
 }
 
-function buildDailySeries(items, keyField = 'date', valueField = 'total') {
-  const period = getSelectedPeriod();
-  const daysInMonth = new Date(period.year, period.month + 1, 0).getDate();
+function buildDailySeries(items, keyField = 'date', valueField = 'total', periodOverride) {
+  const period = periodOverride || getSelectedPeriod();
+  // if period.month is null -> year view: aggregate by month
   const map = new Map();
   items.forEach(item => {
     const key = item[keyField];
-    if (!key || !key.startsWith(`${period.year}-${String(period.month + 1).padStart(2, '0')}`)) return;
-    map.set(key, (map.get(key) || 0) + toNumber(item[valueField] || (item.qty * item.price)));
+    if (!key || !key.startsWith(`${period.year}-`)) return;
+    if (period.month === null) {
+      const mon = Number(key.slice(5, 7)) - 1;
+      map.set(mon, (map.get(mon) || 0) + toNumber(item[valueField] || (item.qty * item.price)));
+    } else {
+      if (!key.startsWith(`${period.year}-${String(period.month + 1).padStart(2, '0')}`)) return;
+      map.set(key, (map.get(key) || 0) + toNumber(item[valueField] || (item.qty * item.price)));
+    }
   });
 
+  if (period.month === null) {
+    const labels = monthNames.slice();
+    const values = labels.map((_, idx) => map.get(idx) || 0);
+    return { labels, values };
+  }
+
+  const daysInMonth = new Date(period.year, period.month + 1, 0).getDate();
   const labels = [];
   const values = [];
   for (let day = 1; day <= daysInMonth; day++) {
@@ -1345,8 +1419,8 @@ function buildDailySeries(items, keyField = 'date', valueField = 'total') {
   return { labels, values };
 }
 
-function buildWeeklySeries(items) {
-  const period = getSelectedPeriod();
+function buildWeeklySeries(items, periodOverride) {
+  const period = periodOverride || getSelectedPeriod();
   if (period.month === null) {
     const map = new Map();
     items.forEach(item => {
@@ -1371,8 +1445,8 @@ function buildWeeklySeries(items) {
   return { labels, values: buckets.slice(0, Math.ceil(daysInMonth / 7)) };
 }
 
-function buildTopDaysSeries(items) {
-  const period = getSelectedPeriod();
+function buildTopDaysSeries(items, periodOverride) {
+  const period = periodOverride || getSelectedPeriod();
   const map = new Map();
   items.forEach(item => {
     const date = item.date;
@@ -1393,11 +1467,26 @@ function destroyCharts() {
 
 function renderCharts() {
   destroyCharts();
-  const revenueSeries = buildDailySeries(getFilteredSales());
-  const quantitySeries = buildDailySeries(getFilteredSales(), 'date', 'qty');
-  const expenseSeries = buildDailySeries(getFilteredExpenses(), 'date', 'amount');
-  const weeklySeries = buildWeeklySeries(getFilteredSales());
-  const topDaysSeries = buildTopDaysSeries(getFilteredSales());
+  // Use dashboard filters by default (so charts reflect main Month/Year/Date selectors)
+  const salesData = getFilteredSales();
+  const expensesData = getFilteredExpenses();
+  const period = getSelectedPeriod();
+  // console.debug('[DEBUG] renderCharts period:', period, 'salesData:', salesData.length, 'expensesData:', expensesData.length);
+
+  const revenueSeries = buildDailySeries(salesData, 'date', 'total', period);
+  const quantitySeries = buildDailySeries(salesData, 'date', 'qty', period);
+  const expenseSeries = buildDailySeries(expensesData, 'date', 'amount', period);
+  const weeklySeries = buildWeeklySeries(salesData, period);
+  const topDaysSeries = buildTopDaysSeries(salesData, period);
+  const expensesMonthly = buildDailySeries(expensesData, 'date', 'amount', period);
+  // top sales dates: sort by total and pick top N
+  const salesByDateMap = new Map();
+  salesData.forEach(s => {
+    if (!s.date) return;
+    salesByDateMap.set(s.date, (salesByDateMap.get(s.date) || 0) + toNumber(s.total || (s.qty * s.price)));
+  });
+  const topSalesEntries = [...salesByDateMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const topSalesSeries = { labels: topSalesEntries.map(e => e[0]), values: topSalesEntries.map(e => e[1]) };
 
   const sharedOptions = {
     responsive: true,
@@ -1409,15 +1498,49 @@ function renderCharts() {
     },
     scales: {
       x: {
-        ticks: {
-          maxRotation: 0,
-          autoSkip: true,
-          maxTicksLimit: 8
-        }
+        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
       },
       y: { beginAtZero: true }
     }
   };
+
+  // Helper to adjust x-axis ticks: if labels are many (e.g., 12 months), show all and rotate vertically when needed
+  function chartOptionsForLabels(labels) {
+    const opts = JSON.parse(JSON.stringify(sharedOptions));
+    const len = labels ? labels.length : 0;
+    // If labels are ISO dates (YYYY-MM-DD) and represent a month view,
+    // show only the day number on the x-axis for clarity on small screens.
+    const isIsoDate = labels && labels.length && /^\d{4}-\d{2}-\d{2}$/.test(labels[0]);
+    // If it's a full-year view (12 months) or many labels, show all labels and rotate vertically
+    if (len >= 10) {
+      opts.scales.x.ticks.autoSkip = false;
+      opts.scales.x.ticks.maxRotation = 90;
+      opts.scales.x.ticks.minRotation = 45;
+      // reduce font size for mobile readability
+      opts.plugins.legend.display = false;
+      if (isIsoDate) {
+        opts.scales.x.ticks.callback = function(tick) { try { return String(tick).split('-')[2]; } catch(e){ return tick; } };
+        opts.scales.x.ticks.font = { size: 10 };
+      }
+    } else if (len > 6) {
+      opts.scales.x.ticks.autoSkip = false;
+      opts.scales.x.ticks.maxRotation = 45;
+      opts.scales.x.ticks.minRotation = 30;
+      if (isIsoDate) {
+        opts.scales.x.ticks.callback = function(tick) { try { return String(tick).split('-')[2]; } catch(e){ return tick; } };
+        opts.scales.x.ticks.font = { size: 11 };
+      }
+    } else {
+      opts.scales.x.ticks.autoSkip = true;
+      opts.scales.x.ticks.maxRotation = 0;
+      if (isIsoDate) {
+        // keep autoSkip for many days but show day numbers
+        opts.scales.x.ticks.callback = function(tick) { try { return String(tick).split('-')[2]; } catch(e){ return tick; } };
+        opts.scales.x.ticks.font = { size: 12 };
+      }
+    }
+    return opts;
+  }
 
   state.charts.dailyRevenue = new Chart(document.getElementById('dailyRevenueChart'), {
     type: 'line',
@@ -1425,7 +1548,7 @@ function renderCharts() {
       labels: revenueSeries.labels,
       datasets: [{ label: 'Revenue (₹)', data: revenueSeries.values, borderColor: '#1A65A8', backgroundColor: 'rgba(26,101,168,0.12)', fill: true, tension: 0.25, pointRadius: 2 }]
     },
-    options: { ...sharedOptions, plugins: { legend: { display: false } } }
+    options: { ...chartOptionsForLabels(revenueSeries.labels), plugins: { legend: { display: false } } }
   });
 
   state.charts.dailyQuantity = new Chart(document.getElementById('dailyQuantityChart'), {
@@ -1434,7 +1557,7 @@ function renderCharts() {
       labels: quantitySeries.labels,
       datasets: [{ label: 'Quantity (kg)', data: quantitySeries.values, borderColor: '#3A8ED4', backgroundColor: 'rgba(58,142,212,0.12)', fill: true, tension: 0.25, pointRadius: 2 }]
     },
-    options: sharedOptions
+    options: chartOptionsForLabels(quantitySeries.labels)
   });
 
   state.charts.revenueExpense = new Chart(document.getElementById('revenueExpenseChart'), {
@@ -1446,7 +1569,7 @@ function renderCharts() {
         { label: 'Expenses', data: expenseSeries.values, backgroundColor: '#98A2B3' }
       ]
     },
-    options: sharedOptions
+    options: chartOptionsForLabels(revenueSeries.labels)
   });
 
   state.charts.weeklyRevenue = new Chart(document.getElementById('weeklyRevenueChart'), {
@@ -1455,7 +1578,7 @@ function renderCharts() {
       labels: weeklySeries.labels,
       datasets: [{ label: 'Weekly Revenue', data: weeklySeries.values, backgroundColor: '#0D3F6E' }]
     },
-    options: sharedOptions
+    options: chartOptionsForLabels(weeklySeries.labels)
   });
 
   state.charts.topDays = new Chart(document.getElementById('topDaysChart'), {
@@ -1465,6 +1588,18 @@ function renderCharts() {
       datasets: [{ label: 'Top Selling Days', data: topDaysSeries.values.length ? topDaysSeries.values : [0], backgroundColor: 'rgba(26,101,168,0.25)', borderColor: '#1A65A8' }]
     },
     options: sharedOptions
+  });
+
+  state.charts.expenses = new Chart(document.getElementById('expensesChart'), {
+    type: 'bar',
+    data: { labels: expensesMonthly.labels, datasets: [{ label: 'Expenses (₹)', data: expensesMonthly.values, backgroundColor: '#98A2B3' }] },
+    options: chartOptionsForLabels(expensesMonthly.labels)
+  });
+
+  state.charts.topSales = new Chart(document.getElementById('topSalesChart'), {
+    type: 'bar',
+    data: { labels: topSalesSeries.labels, datasets: [{ label: 'Sales (₹)', data: topSalesSeries.values, backgroundColor: '#1A65A8' }] },
+    options: chartOptionsForLabels(topSalesSeries.labels)
   });
 }
 
@@ -1496,6 +1631,26 @@ function resetToCurrentMonth() {
   document.getElementById('year-selector').value = String(state.selectedYear);
   document.getElementById('date-selector').value = '';
   renderDashboard();
+}
+
+function resetAnalyticsToCurrentMonth() {
+  // synchronize analytics reset with main dashboard filters
+  resetToCurrentMonth();
+  // also sync analytics selector UI to reflect the main selectors (if visible)
+  if (document.getElementById('analytics-month-selector')) document.getElementById('analytics-month-selector').value = document.getElementById('month-selector').value;
+  if (document.getElementById('analytics-year-selector')) document.getElementById('analytics-year-selector').value = document.getElementById('year-selector').value;
+  if (document.getElementById('analytics-date-selector')) document.getElementById('analytics-date-selector').value = document.getElementById('date-selector').value;
+}
+
+function applyAnalyticsFilter() {
+  // apply analytics filter by copying values into the main dashboard selectors
+  const m = document.getElementById('analytics-month-selector').value;
+  const y = document.getElementById('analytics-year-selector').value;
+  const d = document.getElementById('analytics-date-selector').value;
+  document.getElementById('month-selector').value = m;
+  document.getElementById('year-selector').value = y;
+  document.getElementById('date-selector').value = d;
+  applyMonthlyFilter();
 }
 
 function applyMonthlyFilter() {
@@ -1662,6 +1817,7 @@ function loadSales() {
   if (state.salesListener) return;
   state.salesListener = db.collection('sales').orderBy('date', 'desc').onSnapshot(snapshot => {
     state.salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // console.debug('[DEBUG] sales listener: loaded', state.salesData.length, 'records', state.salesData.slice(0,3));
     renderDashboard();
   }, err => {
     showToast('Error loading sales: ' + err.message);
@@ -1672,6 +1828,7 @@ function loadExpenses() {
   if (state.expensesListener) return;
   state.expensesListener = db.collection('expenses').orderBy('date', 'desc').onSnapshot(snapshot => {
     state.expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // console.debug('[DEBUG] expenses listener: loaded', state.expensesData.length, 'records', state.expensesData.slice(0,3));
     renderDashboard();
   }, err => {
     showToast('Error loading expenses: ' + err.message);
@@ -1854,6 +2011,9 @@ window.addEventListener('load', () => {
   document.getElementById('month-selector').addEventListener('change', applyMonthlyFilter);
   document.getElementById('year-selector').addEventListener('change', applyMonthlyFilter);
   document.getElementById('date-selector').addEventListener('change', applyMonthlyFilter);
+  document.getElementById('analytics-month-selector').addEventListener('change', () => { state.analytics.selectedMonth = document.getElementById('analytics-month-selector').value; });
+  document.getElementById('analytics-year-selector').addEventListener('change', () => { state.analytics.selectedYear = document.getElementById('analytics-year-selector').value; });
+  document.getElementById('analytics-date-selector').addEventListener('change', () => { state.analytics.selectedDate = document.getElementById('analytics-date-selector').value; });
   document.getElementById('sale-qty').addEventListener('input', updateSaleAutoAmounts);
   document.getElementById('sale-price').addEventListener('input', updateSaleAutoAmounts);
   document.getElementById('received-amount').addEventListener('input', updateSaleAutoAmounts);
