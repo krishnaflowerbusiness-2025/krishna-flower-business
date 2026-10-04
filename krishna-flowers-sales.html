@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Krishna Flowers Sales System ok</title>
+<link rel="icon" type="image/png" href="logo.png" />
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- jsPDF for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue-50:  #EBF4FF;
+    --blue-100: #BDD9F7;
+    --blue-200: #8CBDE8;
+    --blue-400: #3A8ED4;
+    --blue-600: #1A65A8;
+    --blue-800: #0D3F6E;
+    --blue-900: #072848;
+    --gray-50:  #F7F8FA;
+    --gray-100: #EAECF0;
+    --gray-200: #D0D5DD;
+    --gray-400: #98A2B3;
+    --gray-600: #475467;
+    --gray-800: #1D2939;
+    --white:    #FFFFFF;
+    --danger:   #C0392B;
+    --danger-bg:#FDECEA;
+    --success:  #1A7A4A;
+    --success-bg:#E6F5EC;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--blue-50);
+    color: var(--gray-800);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 22px; font-weight: 600; }
+  h2 { font-size: 18px; font-weight: 600; }
+  h3 { font-size: 15px; font-weight: 600; }
+  p  { color: var(--gray-600); }
+
+  /* ── Utility ── */
+  .hidden { display: none !important; }
+  .flex   { display: flex; }
+  .gap-8  { gap: 8px; }
+  .gap-12 { gap: 12px; }
+
+  /* ── Login Page ── */
+  #login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    background: linear-gradient(145deg, var(--blue-800) 0%, var(--blue-600) 60%, var(--blue-400) 100%);
+  }
+
+  .login-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 48px rgba(7,40,72,0.22);
+  }
+
+  .login-brand {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .login-brand .flower-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--blue-50);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 28px;
+  }
+
+  .login-brand h1 {
+    color: var(--blue-800);
+    font-size: 19px;
+    line-height: 1.3;
+  }
+
+  .login-brand p {
+    font-size: 13px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+  }
+
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font);
+    background: var(--white);
+    color: var(--gray-800);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--blue-400);
+    box-shadow: 0 0 0 3px rgba(58,142,212,0.15);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font);
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--blue-600);
+    color: var(--white);
+  }
+  .btn-primary:hover { background: var(--blue-800); }
+
+  .btn-secondary {
+    background: var(--white);
+    color: var(--blue-600);
+    border: 1.5px solid var(--blue-200);
+  }
+  .btn-secondary:hover { background: var(--blue-50); }
+
+  .btn-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1.5px solid #FADBD8;
+  }
+  .btn-danger:hover { background: #FADBD8; }
+
+  .btn-full { width: 100%; }
+
+  .btn-sm { padding: 7px 12px; font-size: 13px; }
+
+  #login-error {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #FADBD8;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  /* ── Top Navigation ── */
+  #navbar {
+    background: var(--blue-800);
+    color: var(--white);
+    padding: 0 1.5rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(7,40,72,0.18);
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .navbar-brand span { font-size: 22px; }
+
+  .navbar-brand img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #user-email {
+    font-size: 13px;
+    color: var(--blue-100);
+  }
+
+  /* ── Dashboard Layout ── */
+  #dashboard-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .nav-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+
+  .nav-tab {
+    border: 1px solid var(--blue-200);
+    background: var(--white);
+    color: var(--blue-700);
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .nav-tab.active {
+    background: var(--blue-800);
+    color: var(--white);
+    border-color: var(--blue-800);
+  }
+
+  .page-section {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .section-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .analytics-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #daily-sales-analytics-table {
+    font-size: 12px;
+  }
+
+  #daily-sales-analytics-table th,
+  #daily-sales-analytics-table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .page-chip {
+    border: 1px solid var(--blue-200);
+    background: var(--white);
+    color: var(--blue-600);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .page-chip.active {
+    background: var(--blue-800);
+    color: var(--white);
+    border-color: var(--blue-800);
+  }
+
+  /* ── Summary Cards ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .summary-card,
+  .form-group {
+    min-width: 0;
+  }
+
+  .summary-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+  }
+
+  .summary-card .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+
+  .summary-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--blue-800);
+    line-height: 1;
+  }
+
+  .summary-card .value.green { color: var(--success); }
+  .summary-card .sub {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+
+  /* ── Card Container ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-header h2 { color: var(--blue-800); font-size: 16px; }
+  .card-body { padding: 1.25rem; }
+
+  /* ── Form Grid ── */
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+
+  /* ── Sales Table ── */
+  .table-wrapper { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead th {
+    background: var(--blue-50);
+    color: var(--blue-800);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--blue-100);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover { background: var(--blue-50); }
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 11px 14px;
+    color: var(--gray-800);
+    vertical-align: middle;
+  }
+
+  .actions-cell {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--gray-400);
+  }
+
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Edit inline row ── */
+  .edit-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1.5px solid var(--blue-200);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: var(--font);
+    background: var(--white);
+    outline: none;
+  }
+
+  .edit-input:focus {
+    border-color: var(--blue-400);
+    box-shadow: 0 0 0 3px rgba(58,142,212,0.12);
+  }
+
+  /* ── Report Buttons ── */
+  .report-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--blue-800);
+    color: var(--white);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    box-shadow: var(--shadow-md);
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    max-width: 300px;
+  }
+
+  #toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Loading Overlay ── */
+  #loading {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9998;
+    font-size: 15px;
+    color: var(--blue-600);
+    font-weight: 500;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--blue-100);
+    border-top-color: var(--blue-600);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-blue { background: var(--blue-50); color: var(--blue-600); }
+
+  /* ── Config Note ── */
+  .config-note {
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    font-size: 13px;
+    color: #5D4037;
+    line-height: 1.7;
+  }
+
+  .config-note strong { color: #3E2723; }
+  .config-note code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    #dashboard-page { padding: 1rem; }
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .summary-card .value { font-size: 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    #user-email { display: none; }
+    .navbar-brand { font-size: 14px; }
+    .pagination { flex-direction: column; align-items: stretch; }
+    .pagination-controls { justify-content: center; }
+  }
+
+  /* Analytics charts layout */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .chart-card {
+    background: var(--white);
+    border: 1px solid rgba(15, 87, 140, 0.08);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  .chart-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    background: linear-gradient(180deg, rgba(13,63,110,0.02), rgba(13,63,110,0.00));
+  }
+
+  .chart-header h3 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--gray-700);
+  }
+
+  .chart-body {
+    padding: 10px;
+    height: 220px;
+    min-height: 220px;
+  }
+
+  @media (max-width: 900px) {
+    .analytics-grid { grid-template-columns: 1fr; }
+    .chart-body { height: 260px; min-height: 260px; }
+  }
+
+  @media (max-width: 560px) {
+    .chart-header { padding: 8px 10px; }
+    .chart-header h3 { font-size: 13px; }
+    .chart-body { height: 210px; min-height: 210px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Loading ── -->
+<div id="loading">
+  <div class="spinner"></div>
+  <span>Loading...</span>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     LOGIN PAGE
+═══════════════════════════════════════════ -->
+<div id="login-page" class="hidden">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="flower-icon">🌸</div>
+      <h1>Krishna Flowers<br>Sales System</h1>
+      <p>Jasmine Sales Management</p>
+    </div>
+
+    <div id="login-error"></div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="Enter your email" autocomplete="username" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="handleLogin()">
+      Sign In
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     DASHBOARD PAGE
+═══════════════════════════════════════════ -->
+<div id="dashboard-page" style="display:none;">
+  <nav id="navbar">
+    <div class="navbar-brand">
+      <img src="logo.png" alt="Krishna Flowers Logo" /> Krishna Flowers
+    </div>
+    <div class="navbar-right">
+      <span id="user-email"></span>
+      <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div id="main-content">
+    <div class="toolbar-card">
+      <div class="toolbar-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label for="month-selector">Month</label>
+          <select id="month-selector"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label for="year-selector">Year</label>
+          <select id="year-selector"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label for="date-selector">Date</label>
+          <input type="date" id="date-selector" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="resetToCurrentMonth()">Current Month</button>
+        </div>
+      </div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-page="home">Home</button>
+        <button class="nav-tab" data-page="sales">Sales</button>
+        <button class="nav-tab" data-page="expenses">Expenses</button>
+        <button class="nav-tab" data-page="analytics">Analytics</button>
+      </div>
+    </div>
+
+    <section id="home-section" class="page-section">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">Total Sales</div>
+          <div class="value" id="total-sales">0</div>
+          <div class="sub">transactions</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Total Quantity Sold</div>
+          <div class="value" id="total-qty">0.000 kg</div>
+          <div class="sub">jasmine sold</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Total Expenses</div>
+          <div class="value" id="total-expenses">₹0</div>
+          <div class="sub">tracked costs</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Net Total</div>
+          <div class="value green" id="net-profit">₹0</div>
+          <div class="sub">gross revenue − expenses</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Total Pending</div>
+          <div class="value" id="total-pending">₹0</div>
+          <div class="sub">sales not received</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Today's Revenue</div>
+          <div class="value green" id="today-revenue">₹0</div>
+          <div class="sub" id="today-date"></div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Monthly Revenue</div>
+          <div class="value green" id="monthly-revenue">₹0</div>
+          <div class="sub" id="monthly-label"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>🏠 Quick Actions</h2>
+          <span class="badge badge-blue" id="summary-period-badge">Current Month</span>
+        </div>
+        <div class="card-body">
+          <div class="section-actions">
+            <button class="btn btn-primary" onclick="showPage('sales')">+ Add Sale</button>
+            <button class="btn btn-secondary" onclick="showPage('expenses')">+ Add Expense</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sales-section" class="page-section hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2 id="form-title">➕ Record New Sale</h2>
+          <span class="badge badge-blue">Jasmine</span>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="sale-date">Date</label>
+              <input type="date" id="sale-date" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="sale-qty">Quantity (kg)</label>
+              <input type="number" id="sale-qty" placeholder="e.g. 1.5" min="0.01" step="0.01" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="sale-price">Rate / kg (₹)</label>
+              <input type="number" id="sale-price" placeholder="e.g. 250" min="0" step="0.01" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="total-amount">Total Amount (₹)</label>
+              <input type="text" id="total-amount" placeholder="Auto" readonly />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="received-amount">Received Amount (₹)</label>
+              <input type="number" id="received-amount" placeholder="e.g. 500" min="0" step="0.01" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="pending-amount">Pending Amount (₹)</label>
+              <input type="text" id="pending-amount" placeholder="Auto" readonly />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="sale-remarks">Remarks</label>
+              <input type="text" id="sale-remarks" placeholder="Notes / remarks" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>&nbsp;</label>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" id="save-btn" onclick="saveSale()" style="flex:1">Save Sale</button>
+                <button class="btn btn-secondary hidden" id="cancel-btn" onclick="cancelEdit()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>📄 Export Sales PDF</h2>
+        </div>
+        <div class="card-body">
+          <div class="report-btns">
+            <button class="btn btn-secondary" onclick="downloadReport('daily')">⬇ Daily Report</button>
+            <button class="btn btn-secondary" onclick="downloadReport('weekly')">⬇ Weekly Report</button>
+            <button class="btn btn-secondary" onclick="downloadReport('monthly')">⬇ Monthly Report</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Sales Records</h2>
+          <span id="record-count" style="font-size:13px;color:var(--gray-400);">0 records</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="sales-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Quantity (kg)</th>
+                <th>Price / kg (₹)</th>
+                <th>Total Amount (₹)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sales-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="expenses-section" class="page-section hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2>💸 Expense Management</h2>
+          <span class="badge badge-blue">Expenses</span>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-date">Date</label>
+              <input type="date" id="expense-date" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-category">Category</label>
+              <select id="expense-category">
+                <option value="">Select category</option>
+                <option>Flowers</option>
+                <option>Labor</option>
+                <option>Packaging</option>
+                <option>Transport</option>
+                <option>Rent</option>
+                <option>Utilities</option>
+                <option>Miscellaneous</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-desc">Description</label>
+              <input type="text" id="expense-desc" placeholder="Expense detail" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-amount">Amount (₹)</label>
+              <input type="number" id="expense-amount" placeholder="e.g. 450" min="0.01" step="0.01" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>&nbsp;</label>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" id="save-expense-btn" onclick="saveExpense()" style="flex:1">Save Expense</button>
+                <button class="btn btn-secondary hidden" id="cancel-expense-btn" onclick="cancelExpenseEdit()">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="expense-summary-grid" id="expense-summary-grid"></div>
+
+          <div class="form-row" style="margin-top:12px;">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-search">Search</label>
+              <input type="text" id="expense-search" placeholder="Search description / category" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-category-filter">Category Filter</label>
+              <select id="expense-category-filter">
+                <option value="all">All Categories</option>
+                <option>Flowers</option>
+                <option>Labor</option>
+                <option>Packaging</option>
+                <option>Transport</option>
+                <option>Rent</option>
+                <option>Utilities</option>
+                <option>Miscellaneous</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-date-filter">Date Filter</label>
+              <input type="date" id="expense-date-filter" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="expense-month-filter">Month Filter</label>
+              <select id="expense-month-filter"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>🧾 Expense Records</h2>
+          <span id="expense-record-count" style="font-size:13px;color:var(--gray-400);">0 records</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="expense-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Amount (₹)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="expense-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="analytics-section" class="page-section hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2>� Daily Sales Report</h2>
+        </div>
+        <div class="card-body">
+          <div class="analytics-table-wrap">
+            <table id="daily-sales-analytics-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Rate</th>
+                  <th>Weight</th>
+                  <th>Total Amt</th>
+                  <th>Received Amt</th>
+                  <th>Pending Amt</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="daily-sales-analytics-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span id="daily-sales-page-info">0 results</span>
+            <div class="pagination-controls" id="daily-sales-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>�📊 Analytics Dashboard</h2>
+        </div>
+        <div class="card-body">
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <div class="chart-header"><h3>Daily Revenue</h3></div>
+              <div class="chart-body"><canvas id="dailyRevenueChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Daily Quantity</h3></div>
+              <div class="chart-body"><canvas id="dailyQuantityChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Revenue vs Expenses</h3></div>
+              <div class="chart-body"><canvas id="revenueExpenseChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Weekly Revenue</h3></div>
+              <div class="chart-body"><canvas id="weeklyRevenueChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header"><h3>Top-Selling Days</h3></div>
+              <div class="chart-body"><canvas id="topDaysChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FIREBASE CONFIG & APP LOGIC
+     ↓↓↓ REPLACE firebaseConfig WITH YOUR OWN ↓↓↓
+═══════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB-LNubGprsStcS7ABwj6iW47usX3bXeXk",
+  authDomain: "flower-erp-system.firebaseapp.com",
+  projectId: "flower-erp-system",
+  storageBucket: "flower-erp-system.firebasestorage.app",
+  messagingSenderId: "998452270450",
+  appId: "1:998452270450:web:4febc7d8e76a7175b479eb",
+  measurementId: "G-MTXJCEWLE9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const state = {
+  salesData: [],
+  expensesData: [],
+  salesListener: null,
+  expensesListener: null,
+  editingSaleId: null,
+  editingExpenseId: null,
+  selectedMonth: 'current',
+  selectedYear: new Date().getFullYear(),
+  selectedDate: '',
+  expenseSearch: '',
+  expenseCategoryFilter: 'all',
+  expenseDateFilter: '',
+  expenseMonthFilter: 'all',
+  charts: {},
+  analyticsPage: 1
+};
+
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function showToast(msg, duration = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function setLoading(on) {
+  document.getElementById('loading').style.display = on ? 'flex' : 'none';
+}
+
+function toNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatCurrency(value) {
+  return '₹' + toNumber(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatAmount(value) {
+  return toNumber(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '-';
+  const [y, m, d] = dateStr.split('-');
+  return `${d} ${monthNames[Number(m) - 1]} ${y}`;
+}
+
+function setTodayDate() {
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0];
+  document.getElementById('sale-date').value = dateStr;
+  document.getElementById('expense-date').value = dateStr;
+  document.getElementById('today-date').textContent = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function populateMonthSelector() {
+  const monthSelect = document.getElementById('month-selector');
+  const expenseMonthSelect = document.getElementById('expense-month-filter');
+  const options = ['<option value="current">Current Month</option>', '<option value="all">All Months</option>'];
+  monthNames.forEach((month, index) => options.push(`<option value="${index}">${month}</option>`));
+  monthSelect.innerHTML = options.join('');
+  expenseMonthSelect.innerHTML = '<option value="all">All Months</option>' + monthNames.map((month, index) => `<option value="${index}">${month}</option>`).join('');
+  monthSelect.value = 'current';
+  expenseMonthSelect.value = 'all';
+}
+
+function populateYearSelector() {
+  const yearSelect = document.getElementById('year-selector');
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let y = currentYear - 3; y <= currentYear + 3; y++) {
+    years.push(`<option value="${y}">${y}</option>`);
+  }
+  yearSelect.innerHTML = years.join('');
+  yearSelect.value = String(currentYear);
+}
+
+function getSelectedPeriod() {
+  const now = new Date();
+  const month = state.selectedMonth === 'current' ? now.getMonth() : state.selectedMonth === 'all' ? null : Number(state.selectedMonth);
+  const year = Number(state.selectedYear || now.getFullYear());
+  const monthLabel = state.selectedMonth === 'current'
+    ? 'Current Month'
+    : state.selectedMonth === 'all'
+      ? `${year}`
+      : `${monthNames[month]} ${year}`;
+  return { month, year, monthLabel, date: state.selectedDate || '' };
+}
+
+function getFilterKey() {
+  const period = getSelectedPeriod();
+  if (period.month === null) return `${period.year}`;
+  return `${period.year}-${String(period.month + 1).padStart(2, '0')}`;
+}
+
+function getFilteredSales() {
+  const period = getSelectedPeriod();
+  const selectedDate = period.date;
+  const selectedMonth = period.month;
+  const selectedYear = period.year;
+
+  return state.salesData.filter(sale => {
+    if (!sale.date) return false;
+    if (selectedDate) return sale.date === selectedDate;
+    if (selectedMonth !== null) {
+      return sale.date.startsWith(`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`);
+    }
+    // All months selection: include any date in the selected year
+    return sale.date.startsWith(`${selectedYear}-`);
+  });
+}
+
+function getFilteredExpenses() {
+  const period = getSelectedPeriod();
+  const selectedDate = period.date;
+  const selectedMonth = period.month;
+  const selectedYear = period.year;
+
+  return state.expensesData.filter(expense => {
+    if (!expense.date) return false;
+    if (selectedDate) return expense.date === selectedDate;
+    if (selectedMonth !== null) return expense.date.startsWith(`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`);
+    return expense.date.startsWith(`${selectedYear}-`);
+  });
+}
+
+function getPeriodText() {
+  const period = getSelectedPeriod();
+  return period.monthLabel;
+}
+
+function calculatePendingAmountByDate(filteredSales) {
+  const salesByDate = filteredSales.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  let pendingAmount = 0;
+
+  salesByDate.forEach(sale => {
+    const total = toNumber(sale.total || (sale.qty * sale.price));
+    const receivedAmount = toNumber(sale.receivedAmount || 0);
+    pendingAmount += total;
+    pendingAmount = Math.max(0, pendingAmount - receivedAmount);
+  });
+
+  return pendingAmount;
+}
+
+function renderSummary() {
+  const filteredSales = getFilteredSales();
+  const filteredExpenses = getFilteredExpenses();
+  const totalSales = filteredSales.length;
+  const totalQty = filteredSales.reduce((sum, item) => sum + toNumber(item.qty), 0);
+  const grossRevenue = filteredSales.reduce((sum, item) => sum + toNumber(item.total || (item.qty * item.price)), 0);
+  const totalExpenses = filteredExpenses.reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const netProfit = grossRevenue - totalExpenses;
+  const pendingAmount = calculatePendingAmountByDate(filteredSales);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayRevenue = filteredSales.filter(item => item.date === todayStr).reduce((sum, item) => sum + toNumber(item.total || (item.qty * item.price)), 0);
+
+  document.getElementById('total-sales').textContent = String(totalSales);
+  document.getElementById('total-qty').textContent = totalQty.toFixed(3) + ' kg';
+  document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+  document.getElementById('net-profit').textContent = formatCurrency(netProfit);
+  document.getElementById('total-pending').textContent = formatCurrency(pendingAmount);
+  document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
+  document.getElementById('monthly-revenue').textContent = formatCurrency(grossRevenue);
+  document.getElementById('monthly-label').textContent = getPeriodText();
+  document.getElementById('summary-period-badge').textContent = getPeriodText();
+}
+
+function showPage(page) {
+  const sections = {
+    home: document.getElementById('home-section'),
+    sales: document.getElementById('sales-section'),
+    expenses: document.getElementById('expenses-section'),
+    analytics: document.getElementById('analytics-section')
+  };
+
+  Object.entries(sections).forEach(([key, section]) => {
+    section.classList.toggle('hidden', key !== page);
+  });
+
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.page === page);
+  });
+}
+
+function renderSalesTable() {
+  const tbody = document.getElementById('sales-tbody');
+  const filteredSales = getFilteredSales().slice().sort((a, b) => b.date.localeCompare(a.date));
+  document.getElementById('record-count').textContent = filteredSales.length + ' record' + (filteredSales.length !== 1 ? 's' : '');
+
+  if (!filteredSales.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">🌸</div><p>No sales available for the selected month.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredSales.map(sale => {
+    const total = toNumber(sale.total || (sale.qty * sale.price));
+    return `
+      <tr>
+        <td>${formatDateDisplay(sale.date)}</td>
+        <td>${toNumber(sale.qty).toFixed(3)} kg</td>
+        <td>${formatCurrency(sale.price)}</td>
+        <td><strong>${formatCurrency(total)}</strong></td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-secondary btn-sm" onclick="startEdit('${sale.id}')">✏ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSale('${sale.id}')">🗑 Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderExpenseSummary() {
+  const filteredExpenses = getFilteredExpenses();
+  const totalExpense = filteredExpenses.reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const topCategoryMap = new Map();
+  filteredExpenses.forEach(item => {
+    const key = item.category || 'Miscellaneous';
+    topCategoryMap.set(key, (topCategoryMap.get(key) || 0) + toNumber(item.amount));
+  });
+  const topCategory = [...topCategoryMap.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  document.getElementById('expense-summary-grid').innerHTML = `
+    <div class="expense-summary-box">Expense Entries<strong>${filteredExpenses.length}</strong></div>
+    <div class="expense-summary-box">Total Expense<strong>${formatCurrency(totalExpense)}</strong></div>
+    <div class="expense-summary-box">Top Category<strong>${topCategory ? topCategory[0] : '—'}</strong></div>
+  `;
+}
+
+function renderDailySalesAnalyticsTable() {
+  const tbody = document.getElementById('daily-sales-analytics-tbody');
+  const filteredSales = getFilteredSales().slice().sort((a, b) => b.date.localeCompare(a.date));
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
+  if (state.analyticsPage > totalPages) state.analyticsPage = totalPages;
+  const start = (state.analyticsPage - 1) * pageSize;
+  const pagedSales = filteredSales.slice(start, start + pageSize);
+
+  document.getElementById('daily-sales-page-info').textContent = `${filteredSales.length} result${filteredSales.length === 1 ? '' : 's'}`;
+
+  const pager = document.getElementById('daily-sales-pagination');
+  pager.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement('button');
+    btn.className = `page-chip ${i === state.analyticsPage ? 'active' : ''}`;
+    btn.textContent = i;
+    btn.addEventListener('click', () => {
+      state.analyticsPage = i;
+      renderDailySalesAnalyticsTable();
+    });
+    pager.appendChild(btn);
+  }
+
+  if (!filteredSales.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📅</div><p>No sales available for the selected period.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pagedSales.map(sale => {
+    const total = toNumber(sale.total || (sale.qty * sale.price));
+    const received = toNumber(sale.receivedAmount || 0);
+    const pending = Math.max(0, total - received);
+    return `
+      <tr>
+        <td>${formatDateDisplay(sale.date)}</td>
+        <td>${formatCurrency(sale.price)}</td>
+        <td>${toNumber(sale.qty).toFixed(3)} kg</td>
+        <td>${formatCurrency(total)}</td>
+        <td>${formatCurrency(received)}</td>
+        <td>${formatCurrency(pending)}</td>
+        <td>${(sale.remarks || '—').replace(/</g, '&lt;')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderExpenseTable() {
+  const tbody = document.getElementById('expense-tbody');
+  const search = state.expenseSearch.trim().toLowerCase();
+  const category = state.expenseCategoryFilter;
+  const date = state.expenseDateFilter;
+  const month = state.expenseMonthFilter;
+
+  const filteredExpenses = getFilteredExpenses().filter(item => {
+    const matchesSearch = !search || (item.description || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search);
+    const matchesCategory = category === 'all' || item.category === category;
+    const matchesDate = !date || item.date === date;
+    const matchesMonth = month === 'all' || (item.date || '').startsWith(`${state.selectedYear}-${String(Number(month) + 1).padStart(2, '0')}`);
+    return matchesSearch && matchesCategory && matchesDate && matchesMonth;
+  }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  document.getElementById('expense-record-count').textContent = filteredExpenses.length + ' record' + (filteredExpenses.length !== 1 ? 's' : '');
+
+  if (!filteredExpenses.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">💸</div><p>No expenses match the current filters.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredExpenses.map(expense => `
+    <tr>
+      <td>${formatDateDisplay(expense.date)}</td>
+      <td>${expense.category || 'Miscellaneous'}</td>
+      <td>${expense.description || '—'}</td>
+      <td><strong>${formatCurrency(expense.amount)}</strong></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-secondary btn-sm" onclick="startEditExpense('${expense.id}')">✏ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteExpense('${expense.id}')">🗑 Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function buildDailySeries(items, keyField = 'date', valueField = 'total') {
+  const period = getSelectedPeriod();
+  // If month is null ("All Months"), aggregate per month for the selected year
+  if (period.month === null) {
+    const map = new Map();
+    items.forEach(item => {
+      const key = item[keyField];
+      if (!key || !key.startsWith(`${period.year}-`)) return;
+      const monthKey = key.slice(0, 7); // YYYY-MM
+      map.set(monthKey, (map.get(monthKey) || 0) + toNumber(item[valueField] || (item.qty * item.price)));
+    });
+
+    const labels = monthNames.map((m, idx) => m);
+    const values = monthNames.map((_, idx) => {
+      const monthKey = `${period.year}-${String(idx + 1).padStart(2, '0')}`;
+      return map.get(monthKey) || 0;
+    });
+    return { labels, values };
+  }
+
+  const daysInMonth = new Date(period.year, period.month + 1, 0).getDate();
+  const map = new Map();
+  items.forEach(item => {
+    const key = item[keyField];
+    if (!key || !key.startsWith(`${period.year}-${String(period.month + 1).padStart(2, '0')}`)) return;
+    map.set(key, (map.get(key) || 0) + toNumber(item[valueField] || (item.qty * item.price)));
+  });
+
+  const labels = [];
+  const values = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    labels.push(date);
+    values.push(map.get(date) || 0);
+  }
+  return { labels, values };
+}
+
+function buildWeeklySeries(items) {
+  const period = getSelectedPeriod();
+  if (period.month === null) {
+    const map = new Map();
+    items.forEach(item => {
+      const date = item.date;
+      if (!date || !date.startsWith(`${period.year}-`)) return;
+      const monthIndex = Number(date.slice(5, 7)) - 1;
+      map.set(monthIndex, (map.get(monthIndex) || 0) + toNumber(item.total || (item.qty * item.price)));
+    });
+    return { labels: monthNames, values: monthNames.map((_, index) => map.get(index) || 0) };
+  }
+
+  const daysInMonth = new Date(period.year, period.month + 1, 0).getDate();
+  const buckets = [0, 0, 0, 0, 0];
+  const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+  items.forEach(item => {
+    const date = item.date;
+    if (!date || !date.startsWith(`${period.year}-${String(period.month + 1).padStart(2, '0')}`)) return;
+    const day = Number(date.split('-')[2]);
+    const index = Math.min(Math.floor((day - 1) / 7), 4);
+    buckets[index] += toNumber(item.total || (item.qty * item.price));
+  });
+  return { labels, values: buckets.slice(0, Math.ceil(daysInMonth / 7)) };
+}
+
+function buildTopDaysSeries(items) {
+  const period = getSelectedPeriod();
+  const map = new Map();
+  items.forEach(item => {
+    const date = item.date;
+    if (!date || !date.startsWith(`${period.year}-`)) return;
+    if (period.month !== null && !date.startsWith(`${period.year}-${String(period.month + 1).padStart(2, '0')}`)) return;
+    const d = new Date(date + 'T00:00:00');
+    const key = d.toLocaleDateString('en-US', { weekday: 'short' });
+    map.set(key, (map.get(key) || 0) + toNumber(item.total || (item.qty * item.price)));
+  });
+  const entries = [...map.entries()].sort((a, b) => b[1] - a[1]);
+  return { labels: entries.map(([label]) => label), values: entries.map(([, value]) => value) };
+}
+
+function destroyCharts() {
+  Object.values(state.charts).forEach(chart => chart.destroy());
+  state.charts = {};
+}
+
+function renderCharts() {
+  destroyCharts();
+  const revenueSeries = buildDailySeries(getFilteredSales());
+  const quantitySeries = buildDailySeries(getFilteredSales(), 'date', 'qty');
+  const expenseSeries = buildDailySeries(getFilteredExpenses(), 'date', 'amount');
+  const weeklySeries = buildWeeklySeries(getFilteredSales());
+  const topDaysSeries = buildTopDaysSeries(getFilteredSales());
+
+  const sharedOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: {
+        ticks: {
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 8
+        }
+      },
+      y: { beginAtZero: true }
+    }
+  };
+
+  state.charts.dailyRevenue = new Chart(document.getElementById('dailyRevenueChart'), {
+    type: 'line',
+    data: {
+      labels: revenueSeries.labels,
+      datasets: [{ label: 'Revenue (₹)', data: revenueSeries.values, borderColor: '#1A65A8', backgroundColor: 'rgba(26,101,168,0.12)', fill: true, tension: 0.25, pointRadius: 2 }]
+    },
+    options: { ...sharedOptions, plugins: { legend: { display: false } } }
+  });
+
+  state.charts.dailyQuantity = new Chart(document.getElementById('dailyQuantityChart'), {
+    type: 'line',
+    data: {
+      labels: quantitySeries.labels,
+      datasets: [{ label: 'Quantity (kg)', data: quantitySeries.values, borderColor: '#3A8ED4', backgroundColor: 'rgba(58,142,212,0.12)', fill: true, tension: 0.25, pointRadius: 2 }]
+    },
+    options: sharedOptions
+  });
+
+  state.charts.revenueExpense = new Chart(document.getElementById('revenueExpenseChart'), {
+    type: 'bar',
+    data: {
+      labels: revenueSeries.labels,
+      datasets: [
+        { label: 'Revenue', data: revenueSeries.values, backgroundColor: '#1A65A8' },
+        { label: 'Expenses', data: expenseSeries.values, backgroundColor: '#98A2B3' }
+      ]
+    },
+    options: sharedOptions
+  });
+
+  state.charts.weeklyRevenue = new Chart(document.getElementById('weeklyRevenueChart'), {
+    type: 'bar',
+    data: {
+      labels: weeklySeries.labels,
+      datasets: [{ label: 'Weekly Revenue', data: weeklySeries.values, backgroundColor: '#0D3F6E' }]
+    },
+    options: sharedOptions
+  });
+
+  state.charts.topDays = new Chart(document.getElementById('topDaysChart'), {
+    type: 'radar',
+    data: {
+      labels: topDaysSeries.labels.length ? topDaysSeries.labels : ['No Data'],
+      datasets: [{ label: 'Top Selling Days', data: topDaysSeries.values.length ? topDaysSeries.values : [0], backgroundColor: 'rgba(26,101,168,0.25)', borderColor: '#1A65A8' }]
+    },
+    options: sharedOptions
+  });
+}
+
+function updateSaleAutoAmounts() {
+  const qty = parseFloat(document.getElementById('sale-qty').value || 0);
+  const price = parseFloat(document.getElementById('sale-price').value || 0);
+  const receivedAmount = parseFloat(document.getElementById('received-amount').value || 0);
+  const total = Number.isFinite(qty) && Number.isFinite(price) ? qty * price : 0;
+  const pending = Math.max(0, total - receivedAmount);
+
+  document.getElementById('total-amount').value = formatCurrency(total);
+  document.getElementById('pending-amount').value = formatCurrency(pending);
+}
+
+function renderDashboard() {
+  renderSummary();
+  renderSalesTable();
+  renderExpenseSummary();
+  renderExpenseTable();
+  renderDailySalesAnalyticsTable();
+  renderCharts();
+}
+
+function resetToCurrentMonth() {
+  state.selectedMonth = 'current';
+  state.selectedYear = new Date().getFullYear();
+  state.selectedDate = '';
+  document.getElementById('month-selector').value = 'current';
+  document.getElementById('year-selector').value = String(state.selectedYear);
+  document.getElementById('date-selector').value = '';
+  renderDashboard();
+}
+
+function applyMonthlyFilter() {
+  state.selectedMonth = document.getElementById('month-selector').value;
+  state.selectedYear = document.getElementById('year-selector').value;
+  state.selectedDate = document.getElementById('date-selector').value;
+  state.analyticsPage = 1;
+  renderDashboard();
+}
+
+function saveSale() {
+  const date = document.getElementById('sale-date').value;
+  const qty = parseFloat(document.getElementById('sale-qty').value);
+  const price = parseFloat(document.getElementById('sale-price').value);
+  const receivedAmount = parseFloat(document.getElementById('received-amount').value || 0);
+  const remarks = document.getElementById('sale-remarks').value.trim();
+
+  if (!date || Number.isNaN(qty) || qty <= 0 || Number.isNaN(price) || price < 0) {
+    showToast('⚠ Please fill all fields with valid values.');
+    return;
+  }
+
+  const total = parseFloat((qty * price).toFixed(2));
+  const saleData = {
+    date,
+    qty,
+    price,
+    total,
+    receivedAmount: Number.isFinite(receivedAmount) ? parseFloat(receivedAmount.toFixed(2)) : 0,
+    remarks
+  };
+  setLoading(true);
+
+  const operation = state.editingSaleId
+    ? db.collection('sales').doc(state.editingSaleId).update(saleData)
+    : db.collection('sales').add({ ...saleData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+  operation.then(() => {
+    showToast(state.editingSaleId ? '✅ Sale updated.' : '✅ Sale recorded.');
+    resetSaleForm();
+    setLoading(false);
+  }).catch(err => {
+    setLoading(false);
+    showToast('Error saving: ' + err.message);
+  });
+}
+
+function deleteSale(id) {
+  if (!confirm('Delete this sale record? This cannot be undone.')) return;
+  setLoading(true);
+  db.collection('sales').doc(id).delete()
+    .then(() => {
+      showToast('🗑 Sale deleted.');
+      setLoading(false);
+    })
+    .catch(err => {
+      setLoading(false);
+      showToast('Error: ' + err.message);
+    });
+}
+
+function startEdit(id) {
+  const sale = state.salesData.find(item => item.id === id);
+  if (!sale) return;
+  state.editingSaleId = id;
+  document.getElementById('sale-date').value = sale.date;
+  document.getElementById('sale-qty').value = sale.qty;
+  document.getElementById('sale-price').value = sale.price;
+  document.getElementById('received-amount').value = sale.receivedAmount ?? 0;
+  document.getElementById('sale-remarks').value = sale.remarks || '';
+  updateSaleAutoAmounts();
+  document.getElementById('form-title').textContent = '✏️ Edit Sale Record';
+  document.getElementById('save-btn').textContent = 'Update Sale';
+  document.getElementById('cancel-btn').classList.remove('hidden');
+  document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit() {
+  state.editingSaleId = null;
+  resetSaleForm();
+}
+
+function resetSaleForm() {
+  state.editingSaleId = null;
+  document.getElementById('sale-qty').value = '';
+  document.getElementById('sale-price').value = '';
+  document.getElementById('received-amount').value = '';
+  document.getElementById('sale-remarks').value = '';
+  document.getElementById('total-amount').value = '';
+  document.getElementById('pending-amount').value = '';
+  document.getElementById('form-title').textContent = '➕ Record New Sale';
+  document.getElementById('save-btn').textContent = 'Save Sale';
+  document.getElementById('cancel-btn').classList.add('hidden');
+}
+
+function saveExpense() {
+  const date = document.getElementById('expense-date').value;
+  const category = document.getElementById('expense-category').value.trim();
+  const description = document.getElementById('expense-desc').value.trim();
+  const amount = parseFloat(document.getElementById('expense-amount').value);
+
+  if (!date || !category || !description || Number.isNaN(amount) || amount <= 0) {
+    showToast('⚠ Please enter a valid expense record.');
+    return;
+  }
+
+  const expenseData = { date, category, description, amount: parseFloat(amount.toFixed(2)) };
+  setLoading(true);
+
+  const operation = state.editingExpenseId
+    ? db.collection('expenses').doc(state.editingExpenseId).update(expenseData)
+    : db.collection('expenses').add({ ...expenseData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+  operation.then(() => {
+    showToast(state.editingExpenseId ? '✅ Expense updated.' : '✅ Expense recorded.');
+    resetExpenseForm();
+    setLoading(false);
+  }).catch(err => {
+    setLoading(false);
+    showToast('Error saving expense: ' + err.message);
+  });
+}
+
+function deleteExpense(id) {
+  if (!confirm('Delete this expense record?')) return;
+  setLoading(true);
+  db.collection('expenses').doc(id).delete().then(() => {
+    showToast('🗑 Expense deleted.');
+    setLoading(false);
+  }).catch(err => {
+    setLoading(false);
+    showToast('Error: ' + err.message);
+  });
+}
+
+function startEditExpense(id) {
+  const expense = state.expensesData.find(item => item.id === id);
+  if (!expense) return;
+  state.editingExpenseId = id;
+  document.getElementById('expense-date').value = expense.date;
+  document.getElementById('expense-category').value = expense.category || '';
+  document.getElementById('expense-desc').value = expense.description || '';
+  document.getElementById('expense-amount').value = expense.amount;
+  document.getElementById('save-expense-btn').textContent = 'Update Expense';
+  document.getElementById('cancel-expense-btn').classList.remove('hidden');
+}
+
+function cancelExpenseEdit() {
+  state.editingExpenseId = null;
+  resetExpenseForm();
+}
+
+function resetExpenseForm() {
+  state.editingExpenseId = null;
+  document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('expense-category').value = '';
+  document.getElementById('expense-desc').value = '';
+  document.getElementById('expense-amount').value = '';
+  document.getElementById('save-expense-btn').textContent = 'Save Expense';
+  document.getElementById('cancel-expense-btn').classList.add('hidden');
+}
+
+function loadSales() {
+  if (state.salesListener) return;
+  state.salesListener = db.collection('sales').orderBy('date', 'desc').onSnapshot(snapshot => {
+    state.salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderDashboard();
+  }, err => {
+    showToast('Error loading sales: ' + err.message);
+  });
+}
+
+function loadExpenses() {
+  if (state.expensesListener) return;
+  state.expensesListener = db.collection('expenses').orderBy('date', 'desc').onSnapshot(snapshot => {
+    state.expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderDashboard();
+  }, err => {
+    showToast('Error loading expenses: ' + err.message);
+  });
+}
+
+function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!email || !pass) {
+    errEl.textContent = 'Please enter email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  setLoading(true);
+  auth.signInWithEmailAndPassword(email, pass).catch(err => {
+    setLoading(false);
+    errEl.textContent = 'Login failed: ' + (err.message || 'Invalid credentials.');
+    errEl.style.display = 'block';
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  setLoading(false);
+  if (user) {
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('dashboard-page').style.display = 'block';
+    document.getElementById('user-email').textContent = user.email;
+    setTodayDate();
+    loadSales();
+    loadExpenses();
+  } else {
+    document.getElementById('login-page').classList.remove('hidden');
+    document.getElementById('dashboard-page').style.display = 'none';
+    if (state.salesListener) {
+      state.salesListener();
+      state.salesListener = null;
+    }
+    if (state.expensesListener) {
+      state.expensesListener();
+      state.expensesListener = null;
+    }
+  }
+});
+
+function handleLogout() {
+  auth.signOut().then(() => showToast('Signed out successfully.'));
+}
+
+function downloadReport(period) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 18;
+  const selected = getSelectedPeriod();
+  const sales = getFilteredSales().slice().sort((a, b) => a.date.localeCompare(b.date));
+  const expenses = getFilteredExpenses().slice().sort((a, b) => a.date.localeCompare(b.date));
+  const grossRevenue = sales.reduce((sum, item) => sum + toNumber(item.total || (item.qty * item.price)), 0);
+  const totalExpenses = expenses.reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const netProfit = grossRevenue - totalExpenses;
+  const marginPct = grossRevenue ? (netProfit / grossRevenue) * 100 : 0;
+
+  doc.setFillColor(13, 63, 110);
+  doc.rect(0, 0, pageW, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('🌸 Krishna Flowers', margin, 16);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text('ERP Sales & Expense Financial Report', margin, 24);
+  doc.setFontSize(10);
+  doc.text('Selected Month: ' + selected.monthLabel, margin, 32);
+  doc.text('Generated: ' + new Date().toLocaleString('en-IN'), margin, 36);
+
+  doc.setTextColor(13, 63, 110);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('Monthly Financial Summary', margin, 52);
+
+  const boxY = 58;
+  const boxW = (pageW - margin * 2 - 8) / 3;
+  const summaryBoxes = [
+    ['Gross Revenue', formatCurrency(grossRevenue)],
+    ['Total Expenses', formatCurrency(totalExpenses)],
+    ['Net Profit', formatCurrency(netProfit)]
+  ];
+
+  summaryBoxes.forEach((box, index) => {
+    const x = margin + index * (boxW + 4);
+    doc.setFillColor(235, 244, 255);
+    doc.roundedRect(x, boxY, boxW, 18, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(90, 90, 90);
+    doc.text(box[0], x + 5, boxY + 6);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(13, 63, 110);
+    doc.text(box[1], x + 5, boxY + 14);
+  });
+
+  let y = boxY + 28;
+  doc.setFontSize(11);
+  doc.setTextColor(13, 63, 110);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Financial Details', margin, y);
+  y += 8;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text('Profit Margin: ' + marginPct.toFixed(2) + '%', margin, y);
+
+  y += 10;
+  if (sales.length) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Sales Table', margin, y);
+    y += 4;
+    doc.autoTable({
+      startY: y,
+      head: [['Date', 'Qty (kg)', 'Price / kg', 'Total (₹)']],
+      body: sales.map(item => [formatDateDisplay(item.date), toNumber(item.qty).toFixed(3), formatCurrency(item.price), formatCurrency(item.total || (item.qty * item.price))]),
+      styles: { fontSize: 9, cellPadding: 3, textColor: [29,41,57], lineColor: [208,213,221], lineWidth: 0.25 },
+      headStyles: { fillColor: [13,63,110], textColor: [255,255,255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [235,244,255] },
+      margin: { left: margin, right: margin },
+      theme: 'grid'
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (expenses.length) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Expense Table', margin, y);
+    y += 4;
+    doc.autoTable({
+      startY: y,
+      head: [['Date', 'Category', 'Description', 'Amount (₹)']],
+      body: expenses.map(item => [formatDateDisplay(item.date), item.category || 'Miscellaneous', item.description || '—', formatCurrency(item.amount)]),
+      styles: { fontSize: 9, cellPadding: 3, textColor: [29,41,57], lineColor: [208,213,221], lineWidth: 0.25 },
+      headStyles: { fillColor: [13,63,110], textColor: [255,255,255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [235,244,255] },
+      margin: { left: margin, right: margin },
+      theme: 'grid'
+    });
+  }
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Krishna Flowers Sales System — Confidential', margin, 290);
+    doc.text('Page ' + i + ' of ' + pageCount, pageW - margin, 290, { align: 'right' });
+  }
+
+  const fileName = 'KrishnaFlowers_' + period + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+  doc.save(fileName);
+  showToast('📥 Report downloaded successfully.');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('login-page').classList.contains('hidden')) {
+    handleLogin();
+  }
+});
+
+window.addEventListener('load', () => {
+  populateMonthSelector();
+  populateYearSelector();
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => showPage(tab.dataset.page));
+  });
+  document.getElementById('month-selector').addEventListener('change', applyMonthlyFilter);
+  document.getElementById('year-selector').addEventListener('change', applyMonthlyFilter);
+  document.getElementById('date-selector').addEventListener('change', applyMonthlyFilter);
+  document.getElementById('sale-qty').addEventListener('input', updateSaleAutoAmounts);
+  document.getElementById('sale-price').addEventListener('input', updateSaleAutoAmounts);
+  document.getElementById('received-amount').addEventListener('input', updateSaleAutoAmounts);
+  document.getElementById('expense-search').addEventListener('input', e => {
+    state.expenseSearch = e.target.value;
+    renderExpenseTable();
+  });
+  document.getElementById('expense-category-filter').addEventListener('change', e => {
+    state.expenseCategoryFilter = e.target.value;
+    renderExpenseTable();
+  });
+  document.getElementById('expense-date-filter').addEventListener('change', e => {
+    state.expenseDateFilter = e.target.value;
+    renderExpenseTable();
+  });
+  document.getElementById('expense-month-filter').addEventListener('change', e => {
+    state.expenseMonthFilter = e.target.value;
+    renderExpenseTable();
+  });
+  resetSaleForm();
+  resetExpenseForm();
+});
+</script>
+</body>
+</html>
